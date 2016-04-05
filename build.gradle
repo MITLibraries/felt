@@ -1,0 +1,27 @@
+plugins {
+   id 'java'
+}
+
+group 'edu.mit.lib'
+version '1.0-SNAPSHOT'
+sourceCompatibility = 1.8
+archivesBaseName = 'felt'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.apache.camel:camel-core:2.17.0'
+    compile 'com.google.guava:guava:19.0'
+    compile 'org.fcrepo.camel:fcrepo-camel:4.4.1'
+    testCompile 'junit:junit:4.11'
+}
+
+task fatJar(type: Jar) {
+    manifest { attributes("Main-Class": "edu.mit.lib.felt.Felt") }
+    baseName = archivesBaseName + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF','META-INF/*.DSA'
+}
