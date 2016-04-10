@@ -47,9 +47,18 @@ public class Felt {
         main.addRouteBuilder(new RouteBuilder() {
             @Override
             public void configure() {
+                ResourceName namer = new ResourceName();
                 from("file://" + work + "?include=.*.xml&delay=2000")
+                    .multicast()
+                      .to("direct:objMeta")
+                      .to("direct:objContainers")
+                    .end();
+
+                from("direct:objMeta")
                     .setHeader("CamelFcrepoIdentifier", simple("/${file:onlyname.noext}"))
-                    .to("direct:createObj")
+                    .to("direct:createObj");
+
+                from("direct:objContainers")
                     .setHeader("CamelFcrepoIdentifier", simple("/${file:onlyname.noext}/bound"))
                     .to("direct:createObj")
                     .setHeader("CamelFcrepoIdentifier", simple("/${file:onlyname.noext}/bound/files"))
@@ -60,24 +69,29 @@ public class Felt {
                 from("file://" + work + "?include=.*.pdf&delay=2000")
                     .setHeader("CamelFcrepoIdentifier", simple("/${file:onlyname.noext}/bound/files/${file:onlyname}"))
                     .setHeader(HTTP_METHOD, constant("PUT"))
-                    .setHeader(CONTENT_TYPE, constant("application/pdf"))
-                    .to("fcrepo:" + repoAddr);
+                    .to("fcrepo:" + repoAddr + "?contentType=application/pdf");
 
                 from("file://" + work + "?include=.*.tif&recursive=true&delay=2000")
-                    .setHeader("CamelFcrepoIdentifier", simple("/${file:parent}/pages/${file:onlyname.noext}"))
+                    .multicast()
+                      .to("direct:tiffContainers")
+                      .to("direct:tiffFile")
+                    .end();
+
+                from("direct:tiffContainers")
+                    .setHeader("CamelFcrepoIdentifier", method(bean(namer, "baseName")))
                     .to("direct:createObj")
-                    .setHeader("CamelFcrepoIdentifier", simple("/${file:parent}/pages/${file:onlyname.noext}/files"))
-                    .to("direct:createObj")
-                    .setHeader("CamelFcrepoIdentifier", simple("/${file:parent}/pages/${file:onlyname.noext}/files/${file.onlyname}"))
+                    .setHeader("CamelFcrepoIdentifier", method(bean(namer, "filesName")))
+                    .to("direct:createObj");
+
+                from("direct:tiffFile")
+                    .setHeader("CamelFcrepoIdentifier", method(bean(namer, "fileName")))
                     .setHeader(HTTP_METHOD, constant("PUT"))
-                    .setHeader(CONTENT_TYPE, constant("image/tiff"))
-                    .to("fcrepo:" + repoAddr);
+                    .to("fcrepo:" + repoAddr + "?contentType=image/tiff");
 
                 from("direct:createObj")
                     .bean("pcdm")
                     .setHeader(HTTP_METHOD, constant("PUT"))
-                    .setHeader(CONTENT_TYPE, constant("text/turtle"))
-                    .to("fcrepo:" + repoAddr);
+                    .to("fcrepo:" + repoAddr + "?contentType=text/turtle");
             }
         });
         try {
