@@ -1,7 +1,6 @@
 # felt - Fedora ELectronic Theses Workflow #
 
-[![Build Status](https://travis-ci.org/MITLibraries/felt.svg?branch=master)]
-(https://travis-ci.org/MITLibraries/felt)
+[![Build Status](https://travis-ci.org/MITLibraries/felt.svg?branch=master)](https://travis-ci.org/MITLibraries/felt)
 
 Felt is a rudimentary tool to support ethesis ingest into a Fedora4 repository.
 It is a standalone (CLI) Apache Camel container that observes a configured directory,
